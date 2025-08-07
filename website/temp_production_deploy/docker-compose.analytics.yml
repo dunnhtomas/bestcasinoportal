@@ -1,0 +1,48 @@
+# Google Analytics 4 Configuration
+version: '3.8'
+
+services:
+  analytics-processor:
+    build:
+      context: ./analytics
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - POSTGRES_URL=postgresql://casino_admin:casino_password@postgres:5432/bestcasinoportal
+      - REDIS_URL=redis://redis:6379
+      - GA4_MEASUREMENT_ID=${GA4_MEASUREMENT_ID}
+      - GA4_API_SECRET=${GA4_API_SECRET}
+    volumes:
+      - ./analytics/src:/app/src:ro
+      - ./analytics/logs:/app/logs
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  reporting-service:
+    build:
+      context: ./reporting
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - POSTGRES_URL=postgresql://casino_admin:casino_password@postgres:5432/bestcasinoportal
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+    volumes:
+      - ./reporting/src:/app/src:ro
+      - ./reporting/reports:/app/reports
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+      - analytics-processor
+    restart: unless-stopped
+
+networks:
+  app-network:
+    external: true

@@ -1,0 +1,88 @@
+{
+  "project": "Best Casino Portal",
+  "domain": "bestcasinoportal.com", 
+  "server_ip": "193.233.161.161",
+  "github_integration": {
+    "user": "tacharge",
+    "email": "123236673+tacharge@users.noreply.github.com",
+    "repository_name": "bestcasinoportal",
+    "repository_url": "https://github.com/tacharge/bestcasinoportal.git",
+    "deployment_branch": "main",
+    "auto_deploy": true
+  },
+  "mcp_configuration": {
+    "context_management": "active",
+    "file_tracking": "comprehensive",
+    "deployment_workflow": "local_git_mcp_server",
+    "validation_required": true
+  },
+  "server_configuration": {
+    "ip": "193.233.161.161",
+    "user": "root", 
+    "ssh_key": "~/.ssh/bestcasinoportal_ed25519",
+    "web_root": "/var/www/bestcasinoportal.com",
+    "nginx_config": "/etc/nginx/sites-available/bestcasinoportal.com",
+    "ssl_cert_path": "/etc/letsencrypt/live/bestcasinoportal.com"
+  },
+  "cloudflare_configuration": {
+    "api_token": "pe2L5nDoK0kKvpGVkRSm4P48FExlWfbTZdOZfhXF",
+    "zone_id": "auto_detect",
+    "dns_management": "terraform",
+    "ssl_mode": "full",
+    "security_level": "medium"
+  },
+  "terraform_infrastructure": {
+    "version": "1.12.2",
+    "provider": "cloudflare 4.52.1",
+    "validation_status": "PASSED",
+    "configuration_path": "/var/www/bestcasinoportal.com/infrastructure/terraform",
+    "state_management": "local"
+  },
+  "deployment_pipeline": {
+    "stages": [
+      "local_development",
+      "git_commit_push", 
+      "mcp_verification",
+      "terraform_validate",
+      "server_deployment",
+      "ssl_verification",
+      "monitoring_check"
+    ],
+    "automation_level": "full",
+    "rollback_enabled": true
+  },
+  "project_structure": {
+    "frontend": {
+      "framework": "Next.js 14",
+      "styling": "Tailwind CSS",
+      "build_output": "out/",
+      "deployment_path": "/var/www/bestcasinoportal.com"
+    },
+    "backend": {
+      "api_gateway": "NestJS",
+      "microservices": ["casino-service", "user-service", "search-service"],
+      "database": "PostgreSQL 15",
+      "cache": "Redis 7",
+      "search": "Elasticsearch 8.11"
+    },
+    "infrastructure": {
+      "terraform": "Cloudflare configuration",
+      "monitoring": "Prometheus + Grafana", 
+      "backup": "Automated scripts",
+      "ssl": "Let Encrypt + Cloudflare"
+    }
+  },
+  "development_workflow": {
+    "local_setup": "✅ Complete",
+    "git_integration": "🔄 Configuring GitHub MCP",
+    "terraform_validation": "✅ Complete",
+    "server_deployment": "✅ Ready",
+    "monitoring": "🔄 Pending"
+  },
+  "status": {
+    "current_phase": "GitHub MCP Integration",
+    "last_updated": "2025-08-08T02:35:00Z",
+    "deployment_ready": true,
+    "next_action": "Create GitHub repository and configure auto-deployment"
+  }
+}

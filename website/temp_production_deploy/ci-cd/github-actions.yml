@@ -1,0 +1,156 @@
+# GitHub Actions CI/CD Pipeline for BestCasinoPortal
+name: Deploy BestCasinoPortal
+
+on:
+  push:
+    branches: [ main, production ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+  POSTGRES_VERSION: '15'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: |
+        cd frontend && npm ci
+        cd ../backend/services/casino-service && npm ci
+        cd ../user-service && npm ci
+        cd ../../api-gateway && npm ci
+    
+    - name: Run frontend tests
+      run: cd frontend && npm test
+      
+    - name: Run backend tests
+      run: |
+        cd backend/services/casino-service && npm test
+        cd ../user-service && npm test
+    
+    - name: Build frontend
+      run: cd frontend && npm run build
+      
+    - name: Build backend services
+      run: |
+        cd backend/services/casino-service && npm run build
+        cd ../user-service && npm run build
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Run security audit
+      run: |
+        cd frontend && npm audit --audit-level high
+        cd ../backend/services/casino-service && npm audit --audit-level high
+    
+    - name: Run Snyk security scan
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+  deploy:
+    needs: [test, security-scan]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/production'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to production server
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd /root/deployment
+          git pull origin production
+          
+          # Build and deploy frontend
+          cd frontend
+          npm ci --production
+          npm run build
+          npm run export
+          
+          # Deploy frontend files
+          sudo rsync -av --delete out/ /var/www/bestcasinoportal.com/
+          sudo chown -R www-data:www-data /var/www/bestcasinoportal.com
+          
+          # Deploy backend services
+          cd ../backend
+          docker-compose down
+          docker-compose up --build -d
+          
+          # Reload Nginx
+          sudo nginx -t && sudo systemctl reload nginx
+          
+          # Run health checks
+          sleep 30
+          curl -f https://bestcasinoportal.com/health || exit 1
+          curl -f http://localhost:3000/health || exit 1
+          
+          echo "Deployment completed successfully"
+
+  monitoring:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/production'
+    
+    steps:
+    - name: Wait for deployment stabilization
+      run: sleep 60
+      
+    - name: Run smoke tests
+      run: |
+        curl -f https://bestcasinoportal.com || exit 1
+        curl -f https://bestcasinoportal.com/api/casinos || exit 1
+        
+    - name: Notify deployment success
+      if: success()
+      run: |
+        echo "Deployment to production successful at $(date)"
+        # Add notification logic here (Slack, email, etc.)
+        
+    - name: Notify deployment failure
+      if: failure()
+      run: |
+        echo "Deployment to production failed at $(date)"
+        # Add failure notification logic here
