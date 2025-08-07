@@ -1,0 +1,199 @@
+name: Casino.ca CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+      
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+      
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-progress
+      
+      - name: Run PHP Linting
+        run: ./vendor/bin/phpcs
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install JS dependencies
+        run: npm ci
+      
+      - name: Run ESLint
+        run: npm run lint
+      
+      - name: Run Style Linting
+        run: npm run lint:style
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: laravel_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+          extensions: mbstring, dom, fileinfo, mysql
+          coverage: xdebug
+      
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+      
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-progress
+      
+      - name: Prepare Laravel Application
+        run: |
+          cp .env.example .env.testing
+          php artisan key:generate --env=testing
+      
+      - name: Run PHP Tests
+        run: vendor/bin/phpunit --coverage-clover=coverage.xml
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install JS dependencies
+        run: npm ci
+      
+      - name: Run Jest Tests
+        run: npm test -- --coverage
+      
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml,./coverage/lcov.info
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+      
+      - name: Start Docker Environment
+        run: docker-compose up -d
+      
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to be ready..."
+          sleep 30
+      
+      - name: Run E2E Tests
+        run: npx playwright test
+      
+      - name: Upload Playwright Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  lighthouse:
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+      
+      - name: Start Docker Environment
+        run: docker-compose up -d
+      
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to be ready..."
+          sleep 30
+      
+      - name: Run Lighthouse CI
+        run: lhci autorun
+      
+      - name: Upload Lighthouse Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 30
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    needs: [lighthouse]
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy to Staging
+        run: echo "Deploying to staging environment"
+        # Replace with actual deployment commands
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: [lighthouse]
+    environment:
+      name: production
+      url: https://casino.ca
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Deploy to Production
+        run: echo "Deploying to production environment"
+        # Replace with actual deployment commands

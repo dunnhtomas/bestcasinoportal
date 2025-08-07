@@ -1,0 +1,141 @@
+name: Performance Testing
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL to test'
+        required: false
+        default: 'http://localhost:3000'
+      threshold:
+        description: 'Performance score threshold (0-100)'
+        required: false
+        default: '80'
+
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'src/package.json'
+          
+      - name: Install dependencies
+        run: |
+          cd src
+          npm ci
+          npm install -g @lhci/cli
+          
+      - name: Build
+        run: |
+          cd src
+          npm run build:prod
+        
+      - name: Start server
+        run: |
+          cd src
+          npm run preview &
+          
+      - name: Wait for server
+        run: sleep 10
+        
+      - name: Run Lighthouse CI
+        run: |
+          cd src
+          lhci autorun --config=../lighthouserc.js
+        
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-results
+          path: ./.lighthouseci
+        
+      - name: Generate detailed report
+        run: |
+          cd src
+          npx lighthouse http://localhost:3000 \
+            --chrome-flags="--headless --no-sandbox" \
+            --output=html \
+            --output-path=../lighthouse-report.html \
+            --form-factor=desktop \
+            --throttling.cpuSlowdownMultiplier=4 \
+            --only-categories=performance,accessibility,best-practices,seo
+          
+      - name: Upload detailed report
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-detailed-report
+          path: lighthouse-report.html
+          
+  core-web-vitals:
+    name: Core Web Vitals
+    runs-on: ubuntu-latest
+    needs: lighthouse
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install Playwright
+        run: |
+          cd src
+          npm ci
+          npx playwright install --with-deps chromium
+          
+      - name: Run Web Vitals Tests
+        run: |
+          cd src
+          npm run test:performance
+          
+      - name: Upload Web Vitals Results
+        uses: actions/upload-artifact@v3
+        with:
+          name: web-vitals-results
+          path: src/playwright-report/
+          
+  bundle-analysis:
+    name: Bundle Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: |
+          cd src
+          npm ci
+          
+      - name: Analyze bundle
+        run: |
+          cd src
+          npm run build:analyze
+          
+      - name: Upload bundle analysis
+        uses: actions/upload-artifact@v3
+        with:
+          name: bundle-analysis
+          path: src/dist/stats.html
