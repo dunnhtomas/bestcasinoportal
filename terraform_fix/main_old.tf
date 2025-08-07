@@ -125,39 +125,44 @@ resource "cloudflare_ruleset" "waf" {
   }
 }
 
-# Modern rate limiting using ruleset (replaces deprecated cloudflare_rate_limit)
-resource "cloudflare_ruleset" "rate_limiting" {
-  zone_id     = data.cloudflare_zone.main.id
-  name        = "${var.project_name} Rate Limiting - ${var.environment}"
-  description = "Rate limiting rules for ${var.domain}"
-  kind        = "zone"
-  phase       = "http_ratelimit"
-
-  rules {
-    action = "block"
-    ratelimit {
-      characteristics = ["cf.colo.id", "ip.src"]
-      period          = var.rate_limit_period
-      requests_per_period = var.rate_limit_threshold
-      mitigation_timeout  = 600
-    }
-    expression  = "(http.request.uri.path matches \"^/api/.*\")"
-    description = "Rate limit API requests"
-    enabled     = true
+# Rate limiting rule using variables
+resource "cloudflare_rate_limit" "api_limit" {
+  zone_id   = data.cloudflare_zone.main.id
+  threshold = var.rate_limit_threshold
+  period    = var.rate_limit_period
+  action {
+    mode    = "challenge"
+    timeout = 86400
   }
-
-  rules {
-    action = "challenge"
-    ratelimit {
-      characteristics = ["ip.src"]
-      period          = 60
-      requests_per_period = 5
-      mitigation_timeout  = 86400
+  match {
+    request {
+      url_pattern = "${var.domain}/api/*"
+      schemes     = ["HTTP", "HTTPS"]
+      methods     = ["GET", "POST", "PUT", "DELETE"]
     }
-    expression  = "(http.request.uri.path matches \"^/login.*\" and http.request.method eq \"POST\")"
-    description = "Rate limit login attempts"
-    enabled     = true
   }
+  disabled    = false
+  description = "Rate limit API requests - ${var.environment}"
+}
+
+# Rate limiting rule for login
+resource "cloudflare_rate_limit" "login_limit" {
+  zone_id   = data.cloudflare_zone.main.id
+  threshold = 5
+  period    = 60
+  action {
+    mode    = "challenge"
+    timeout = 86400
+  }
+  match {
+    request {
+      url_pattern = "${var.domain}/login*"
+      schemes     = ["HTTP", "HTTPS"]
+      methods     = ["POST"]
+    }
+  }
+  disabled    = false
+  description = "Rate limit login attempts - ${var.environment}"
 }
 
 # Custom SSL certificate (conditional on environment)
@@ -172,17 +177,18 @@ resource "cloudflare_certificate_pack" "advanced_certificate" {
   cloudflare_branding   = false
 }
 
-# Simplified Logpush job (conditional on enable_logs)
+# Logpush job (conditional on enable_logs)
 resource "cloudflare_logpush_job" "http_requests" {
   count                = var.enable_logs ? 1 : 0
   zone_id              = data.cloudflare_zone.main.id
   name                 = "${var.project_name}-http-requests-${var.environment}"
   logpull_options      = "fields=ClientIP,ClientRequestHost,ClientRequestMethod,ClientRequestURI,EdgeEndTimestamp,EdgeResponseBytes,EdgeResponseStatus,EdgeStartTimestamp,RayID&timestamps=rfc3339"
-  destination_conf     = "s3://cloudflare-logs-${var.project_name}/http_requests?region=us-east-1"
+  destination_conf     = "s3://cloudflare-logs-${var.project_name}/http_requests/{DATE}?region=us-east-1"
   dataset              = "http_requests"
   enabled              = true
   frequency            = "high"
   max_upload_bytes     = 5000000
+  max_upload_interval  = 30
   max_upload_records   = 1000
 }
 
@@ -242,14 +248,4 @@ output "performance_config" {
     edge_cache_ttl      = var.edge_cache_ttl
     browser_cache_ttl   = var.browser_cache_ttl
   }
-}
-
-output "waf_ruleset_id" {
-  description = "WAF Ruleset ID"
-  value       = cloudflare_ruleset.waf.id
-}
-
-output "rate_limiting_ruleset_id" {
-  description = "Rate Limiting Ruleset ID"
-  value       = cloudflare_ruleset.rate_limiting.id
 }
