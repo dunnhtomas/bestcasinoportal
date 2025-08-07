@@ -1,0 +1,8 @@
+# Cloudflare Zone ID for bestcasinoportal.com
+zone_id = "your_zone_id_here"
+
+# Server IP
+server_ip = "193.233.161.161"
+
+# Domain
+domain = "bestcasinoportal.com"
