@@ -1,0 +1,308 @@
+name: 🚀 Casino Portal CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run nightly build at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '18.x'
+  SERVER_IP: ${{ secrets.SERVER_IP }}
+  SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
+
+jobs:
+  # Code Quality & Security Checks
+  quality-check:
+    name: 🔍 Code Quality & Security
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          frontend/package-lock.json
+          local_development/api_server/package-lock.json
+          advanced_features/package-lock.json
+          
+    - name: 🔧 Install dependencies
+      run: |
+        cd frontend && npm ci
+        cd ../local_development/api_server && npm ci
+        cd ../../advanced_features && npm ci
+        
+    - name: 🧹 ESLint check
+      run: |
+        cd frontend && npm run lint
+        cd ../local_development/api_server && npm run lint || true
+        
+    - name: 🧪 Run tests
+      run: |
+        cd frontend && npm test -- --coverage --watchAll=false
+        cd ../local_development/api_server && npm test || true
+        
+    - name: 🔒 Security audit
+      run: |
+        cd frontend && npm audit --audit-level high
+        cd ../local_development/api_server && npm audit --audit-level high
+        cd ../../advanced_features && npm audit --audit-level high
+        
+    - name: 📊 Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        directory: ./frontend/coverage
+        
+  # Lighthouse Performance Audit
+  lighthouse-audit:
+    name: ⚡ Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    needs: quality-check
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        
+    - name: 🏗️ Build frontend
+      run: |
+        cd frontend
+        npm ci
+        npm run build
+        
+    - name: 🌐 Serve built site
+      run: |
+        cd frontend
+        npx serve -s out -p 3000 &
+        sleep 10
+        
+    - name: ⚡ Run Lighthouse CI
+      uses: treosh/lighthouse-ci-action@v10
+      with:
+        configPath: './.lighthouserc.json'
+        uploadArtifacts: true
+        temporaryPublicStorage: true
+        
+  # Infrastructure Validation
+  infrastructure-validation:
+    name: 🏗️ Infrastructure Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🔧 Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.12.2
+        
+    - name: 🏗️ Terraform Init
+      run: |
+        cd terraform
+        terraform init
+        
+    - name: 📋 Terraform Plan
+      run: |
+        cd terraform
+        terraform plan -var="cloudflare_token=${{ secrets.CLOUDFLARE_TOKEN }}"
+        
+    - name: ✅ Terraform Validate
+      run: |
+        cd terraform
+        terraform validate
+        
+  # Docker Build & Test
+  docker-build:
+    name: 🐳 Docker Build & Test
+    runs-on: ubuntu-latest
+    needs: quality-check
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: 🏗️ Build monitoring stack
+      run: |
+        cd monitoring
+        docker-compose -f docker-compose.monitoring.yml build --no-cache
+        
+    - name: 🧪 Test monitoring stack
+      run: |
+        cd monitoring
+        docker-compose -f docker-compose.monitoring.yml up -d
+        sleep 30
+        
+        # Health checks
+        curl -f http://localhost:9090/-/healthy
+        curl -f http://localhost:3000/api/health
+        curl -f http://localhost:9100/metrics
+        
+        docker-compose -f docker-compose.monitoring.yml down
+        
+  # Deploy to Production
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [quality-check, lighthouse-audit, infrastructure-validation, docker-build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    environment:
+      name: production
+      url: http://bestcasinoportal.com
+      
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        
+    - name: 🔑 Setup SSH key
+      uses: webfactory/ssh-agent@v0.8.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        
+    - name: 🏗️ Build frontend
+      run: |
+        cd frontend
+        npm ci
+        npm run build
+        
+    - name: 📤 Deploy frontend
+      run: |
+        cd frontend
+        rsync -avz --delete out/ root@${{ env.SERVER_IP }}:/var/www/bestcasinoportal.com/html/
+        
+    - name: 📤 Deploy API server
+      run: |
+        rsync -avz local_development/api_server/ root@${{ env.SERVER_IP }}:/opt/casino-api/
+        
+    - name: 📤 Deploy analytics API
+      run: |
+        rsync -avz advanced_features/analytics_api_server.js root@${{ env.SERVER_IP }}:/var/www/bestcasinoportal.com/api/
+        
+    - name: 🔄 Restart services
+      run: |
+        ssh root@${{ env.SERVER_IP }} << 'EOF'
+          systemctl restart nginx
+          systemctl restart casino-api
+          systemctl restart casino-analytics
+          
+          # Wait for services to start
+          sleep 10
+          
+          # Health checks
+          curl -f http://localhost/health || exit 1
+          curl -f http://localhost:4000/health || exit 1
+          curl -f http://localhost:3001/api/system/health || exit 1
+        EOF
+        
+    - name: 🔄 Update monitoring
+      run: |
+        ssh root@${{ env.SERVER_IP }} << 'EOF'
+          cd /opt/casino-monitoring
+          docker-compose pull
+          docker-compose up -d
+          
+          # Verify monitoring services
+          sleep 20
+          curl -f http://localhost:9090/-/healthy
+          curl -f http://localhost:3000/api/health
+        EOF
+        
+    - name: 📊 Run post-deployment tests
+      run: |
+        # Website accessibility test
+        curl -f http://${{ env.SERVER_IP }}
+        
+        # API endpoints test
+        curl -f http://${{ env.SERVER_IP }}/health
+        curl -f http://${{ env.SERVER_IP }}:4000/health
+        curl -f http://${{ env.SERVER_IP }}:3001/api/system/health
+        
+        # Monitoring services test
+        curl -f http://${{ env.SERVER_IP }}:9090/-/healthy
+        curl -f http://${{ env.SERVER_IP }}:3000/api/health
+        
+    - name: 🧹 Create deployment backup
+      run: |
+        ssh root@${{ env.SERVER_IP }} << 'EOF'
+          cd /opt/casino-backups
+          
+          # Create post-deployment backup
+          BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+          mkdir -p "deployments/${BACKUP_DATE}"
+          
+          # Backup current deployment
+          tar -czf "deployments/${BACKUP_DATE}/deployment_${BACKUP_DATE}.tar.gz" \
+            -C /var/www bestcasinoportal.com \
+            -C /opt casino-api
+            
+          echo "Deployment backup created: deployments/${BACKUP_DATE}/"
+        EOF
+        
+  # Security Scan
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🔍 Run OWASP ZAP scan
+      uses: zaproxy/action-full-scan@v0.7.0
+      with:
+        target: 'http://${{ env.SERVER_IP }}'
+        rules_file_name: '.zap/rules.tsv'
+        cmd_options: '-a'
+        
+  # Notification
+  notify:
+    name: 📧 Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [deploy, security-scan]
+    if: always()
+    
+    steps:
+    - name: 📧 Send Slack notification
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        username: 'GitHub Actions'
+        icon_emoji: ':rocket:'
+        text: |
+          🚀 Casino Portal Deployment ${{ job.status }}!
+          
+          📋 Details:
+          • Branch: ${{ github.ref_name }}
+          • Commit: ${{ github.sha }}
+          • Author: ${{ github.actor }}
+          • Build: ${{ github.run_number }}
+          
+          🌐 Live URL: http://bestcasinoportal.com
+          📊 Monitoring: http://${{ env.SERVER_IP }}:3000
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
