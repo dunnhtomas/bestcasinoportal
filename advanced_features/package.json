@@ -1,0 +1,32 @@
+{
+  "name": "bestcasinoportal-advanced-api",
+  "version": "2.1.0",
+  "description": "Advanced API server for Best Casino Portal with search, reviews, and analytics",
+  "main": "advanced_api_server.js",
+  "scripts": {
+    "start": "node advanced_api_server.js",
+    "dev": "nodemon advanced_api_server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "casino",
+    "api",
+    "search",
+    "reviews",
+    "analytics",
+    "express",
+    "nodejs"
+  ],
+  "author": "Best Casino Portal",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

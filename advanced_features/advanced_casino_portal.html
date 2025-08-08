@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best Casino Portal - Advanced Features 2025</title>
+    <meta name="description" content="Advanced casino portal with search, filters, reviews, and comprehensive casino database">
+    <meta name="keywords" content="online casino, casino search, reviews, bonuses, slot games">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white min-h-screen">
+    
+    <!-- Header with Advanced Navigation -->
+    <header class="container mx-auto px-6 py-8" x-data="{ mobileMenu: false }">
+        <nav class="flex justify-between items-center mb-8">
+            <div class="text-2xl font-bold flex items-center">
+                <i class="fas fa-dice text-yellow-400 mr-2"></i>
+                Best Casino Portal Pro
+            </div>
+            
+            <!-- Desktop Menu -->
+            <div class="hidden md:flex space-x-6">
+                <a href="#casinos" class="hover:text-yellow-400 transition flex items-center">
+                    <i class="fas fa-building mr-1"></i> Casinos
+                </a>
+                <a href="#search" class="hover:text-yellow-400 transition flex items-center">
+                    <i class="fas fa-search mr-1"></i> Search
+                </a>
+                <a href="#bonuses" class="hover:text-yellow-400 transition flex items-center">
+                    <i class="fas fa-gift mr-1"></i> Bonuses
+                </a>
+                <a href="#reviews" class="hover:text-yellow-400 transition flex items-center">
+                    <i class="fas fa-star mr-1"></i> Reviews
+                </a>
+                <a href="#tools" class="hover:text-yellow-400 transition flex items-center">
+                    <i class="fas fa-tools mr-1"></i> Tools
+                </a>
+            </div>
+            
+            <!-- Mobile Menu Button -->
+            <button @click="mobileMenu = !mobileMenu" class="md:hidden">
+                <i class="fas fa-bars text-2xl"></i>
+            </button>
+        </nav>
+        
+        <!-- Mobile Menu -->
+        <div x-show="mobileMenu" class="md:hidden bg-black/20 rounded-lg p-4 mb-4">
+            <a href="#casinos" class="block py-2 hover:text-yellow-400 transition">
+                <i class="fas fa-building mr-2"></i> Casinos
+            </a>
+            <a href="#search" class="block py-2 hover:text-yellow-400 transition">
+                <i class="fas fa-search mr-2"></i> Search
+            </a>
+            <a href="#bonuses" class="block py-2 hover:text-yellow-400 transition">
+                <i class="fas fa-gift mr-2"></i> Bonuses
+            </a>
+            <a href="#reviews" class="block py-2 hover:text-yellow-400 transition">
+                <i class="fas fa-star mr-2"></i> Reviews
+            </a>
+        </div>
+        
+        <h1 class="text-5xl font-bold text-center mb-4">
+            <i class="fas fa-crown text-yellow-400"></i> 
+            Advanced Casino Portal 2025
+        </h1>
+        <p class="text-xl text-center text-gray-300">
+            Smart Search • Advanced Filters • User Reviews • Live Data
+        </p>
+    </header>
+
+    <!-- Advanced Search Section -->
+    <section id="search" class="container mx-auto px-6 py-12" x-data="casinoSearch()">
+        <h2 class="text-3xl font-bold text-center mb-8">
+            <i class="fas fa-search text-yellow-400"></i> Smart Casino Search
+        </h2>
+        
+        <div class="max-w-4xl mx-auto">
+            <!-- Search Input -->
+            <div class="mb-6">
+                <div class="relative">
+                    <input 
+                        type="text" 
+                        x-model="searchQuery"
+                        @input="performSearch"
+                        placeholder="Search casinos by name, games, or features..."
+                        class="w-full px-4 py-3 pl-12 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-yellow-400"
+                    >
+                    <i class="fas fa-search absolute left-4 top-4 text-gray-400"></i>
+                </div>
+            </div>
+            
+            <!-- Advanced Filters -->
+            <div class="grid md:grid-cols-4 gap-4 mb-8">
+                <select x-model="filters.rating" @change="performSearch" class="px-3 py-2 bg-white/10 border border-white/20 rounded text-white">
+                    <option value="">All Ratings</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4+ Stars</option>
+                    <option value="3">3+ Stars</option>
+                </select>
+                
+                <select x-model="filters.bonus" @change="performSearch" class="px-3 py-2 bg-white/10 border border-white/20 rounded text-white">
+                    <option value="">All Bonuses</option>
+                    <option value="welcome">Welcome Bonus</option>
+                    <option value="no-deposit">No Deposit</option>
+                    <option value="free-spins">Free Spins</option>
+                </select>
+                
+                <select x-model="filters.games" @change="performSearch" class="px-3 py-2 bg-white/10 border border-white/20 rounded text-white">
+                    <option value="">All Games</option>
+                    <option value="slots">Slots</option>
+                    <option value="table">Table Games</option>
+                    <option value="live">Live Dealer</option>
+                </select>
+                
+                <select x-model="filters.payment" @change="performSearch" class="px-3 py-2 bg-white/10 border border-white/20 rounded text-white">
+                    <option value="">All Payments</option>
+                    <option value="crypto">Crypto</option>
+                    <option value="paypal">PayPal</option>
+                    <option value="card">Credit Card</option>
+                </select>
+            </div>
+            
+            <!-- Search Results -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="casino in filteredCasinos" :key="casino.id">
+                    <div class="bg-white/10 backdrop-blur-lg rounded-lg p-6 border border-white/20 hover:border-yellow-400 transition">
+                        <div class="text-center mb-4">
+                            <div class="text-3xl mb-2" x-text="casino.icon"></div>
+                            <h3 class="text-xl font-bold" x-text="casino.name"></h3>
+                            <div class="flex justify-center mb-2">
+                                <template x-for="i in 5">
+                                    <i class="fas fa-star text-yellow-400" 
+                                       :class="i <= casino.rating ? 'text-yellow-400' : 'text-gray-600'"></i>
+                                </template>
+                            </div>
+                            <span class="text-sm text-gray-300" x-text="casino.rating + '/5'"></span>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-gift text-green-400 mr-2"></i>
+                                <span x-text="casino.bonus"></span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-gamepad text-blue-400 mr-2"></i>
+                                <span x-text="casino.games + ' Games'"></span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <i class="fas fa-credit-card text-purple-400 mr-2"></i>
+                                <span x-text="casino.payment"></span>
+                            </div>
+                        </div>
+                        
+                        <button class="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-bold py-3 rounded hover:from-yellow-400 hover:to-yellow-500 transition">
+                            <i class="fas fa-play mr-2"></i>PLAY NOW
+                        </button>
+                    </div>
+                </template>
+            </div>
+            
+            <!-- No Results -->
+            <div x-show="filteredCasinos.length === 0" class="text-center py-12">
+                <i class="fas fa-search text-6xl text-gray-500 mb-4"></i>
+                <h3 class="text-2xl font-bold mb-2">No casinos found</h3>
+                <p class="text-gray-400">Try adjusting your search criteria</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live API Integration Section -->
+    <section class="container mx-auto px-6 py-12" x-data="liveData()">
+        <h2 class="text-3xl font-bold text-center mb-8">
+            <i class="fas fa-broadcast-tower text-green-400"></i> Live Casino Data
+        </h2>
+        
+        <div class="max-w-4xl mx-auto">
+            <!-- API Status -->
+            <div class="bg-black/30 rounded-lg p-6 mb-8">
+                <h3 class="text-xl font-bold mb-4">
+                    <i class="fas fa-server text-blue-400"></i> API Status
+                </h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold" :class="apiStatus.healthy ? 'text-green-400' : 'text-red-400'">
+                            <i :class="apiStatus.healthy ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle'"></i>
+                        </div>
+                        <p class="text-sm" x-text="apiStatus.healthy ? 'Healthy' : 'Offline'"></p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-400" x-text="apiStatus.uptime"></div>
+                        <p class="text-sm">Uptime</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-purple-400" x-text="apiStatus.version"></div>
+                        <p class="text-sm">Version</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Live Casino Count -->
+            <div class="text-center mb-8">
+                <div class="text-4xl font-bold text-yellow-400 mb-2" x-text="liveStats.totalCasinos"></div>
+                <p class="text-lg text-gray-300">Active Casinos in Database</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- User Reviews Section -->
+    <section id="reviews" class="container mx-auto px-6 py-12" x-data="reviewSystem()">
+        <h2 class="text-3xl font-bold text-center mb-8">
+            <i class="fas fa-star text-yellow-400"></i> User Reviews & Ratings
+        </h2>
+        
+        <div class="max-w-4xl mx-auto">
+            <!-- Review Form -->
+            <div class="bg-white/10 backdrop-blur-lg rounded-lg p-6 mb-8">
+                <h3 class="text-xl font-bold mb-4">
+                    <i class="fas fa-edit text-blue-400"></i> Leave a Review
+                </h3>
+                <form @submit.prevent="submitReview">
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <input 
+                            type="text" 
+                            x-model="newReview.casino"
+                            placeholder="Casino Name"
+                            class="px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-gray-400"
+                            required
+                        >
+                        <select x-model="newReview.rating" class="px-3 py-2 bg-white/10 border border-white/20 rounded text-white" required>
+                            <option value="">Select Rating</option>
+                            <option value="5">5 Stars - Excellent</option>
+                            <option value="4">4 Stars - Good</option>
+                            <option value="3">3 Stars - Average</option>
+                            <option value="2">2 Stars - Poor</option>
+                            <option value="1">1 Star - Terrible</option>
+                        </select>
+                    </div>
+                    <textarea 
+                        x-model="newReview.comment"
+                        placeholder="Your review..."
+                        rows="3"
+                        class="w-full px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-gray-400 mb-4"
+                        required
+                    ></textarea>
+                    <button type="submit" class="bg-yellow-500 text-black font-bold py-2 px-6 rounded hover:bg-yellow-400 transition">
+                        <i class="fas fa-paper-plane mr-2"></i>Submit Review
+                    </button>
+                </form>
+            </div>
+            
+            <!-- Recent Reviews -->
+            <div class="space-y-4">
+                <template x-for="review in reviews" :key="review.id">
+                    <div class="bg-white/10 backdrop-blur-lg rounded-lg p-6">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h4 class="font-bold" x-text="review.casino"></h4>
+                                <div class="flex items-center">
+                                    <template x-for="i in 5">
+                                        <i class="fas fa-star text-sm" 
+                                           :class="i <= review.rating ? 'text-yellow-400' : 'text-gray-600'"></i>
+                                    </template>
+                                    <span class="ml-2 text-sm text-gray-400" x-text="review.rating + '/5'"></span>
+                                </div>
+                            </div>
+                            <span class="text-sm text-gray-400" x-text="review.date"></span>
+                        </div>
+                        <p class="text-gray-300" x-text="review.comment"></p>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advanced Analytics Dashboard -->
+    <section class="container mx-auto px-6 py-12">
+        <h2 class="text-3xl font-bold text-center mb-8">
+            <i class="fas fa-chart-line text-green-400"></i> Analytics Dashboard
+        </h2>
+        
+        <div class="max-w-6xl mx-auto">
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-center">
+                    <i class="fas fa-users text-3xl mb-3"></i>
+                    <div class="text-2xl font-bold">12,847</div>
+                    <p class="text-sm">Active Players</p>
+                </div>
+                <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-lg p-6 text-center">
+                    <i class="fas fa-building text-3xl mb-3"></i>
+                    <div class="text-2xl font-bold">156</div>
+                    <p class="text-sm">Partner Casinos</p>
+                </div>
+                <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-lg p-6 text-center">
+                    <i class="fas fa-gift text-3xl mb-3"></i>
+                    <div class="text-2xl font-bold">€2.4M</div>
+                    <p class="text-sm">Bonuses Claimed</p>
+                </div>
+                <div class="bg-gradient-to-r from-yellow-600 to-yellow-700 rounded-lg p-6 text-center">
+                    <i class="fas fa-star text-3xl mb-3"></i>
+                    <div class="text-2xl font-bold">4.7</div>
+                    <p class="text-sm">Avg. Rating</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black/50 py-12 mt-12">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold mb-4">
+                    <i class="fas fa-dice text-yellow-400"></i> Best Casino Portal Pro
+                </h3>
+                <p class="text-gray-400 max-w-2xl mx-auto">
+                    Advanced casino portal with intelligent search, user reviews, live data integration, 
+                    and comprehensive analytics for the ultimate casino discovery experience.
+                </p>
+            </div>
+            
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h4 class="font-bold mb-4">
+                        <i class="fas fa-search text-blue-400"></i> Search Tools
+                    </h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li>Smart Casino Search</li>
+                        <li>Advanced Filters</li>
+                        <li>Real-time Results</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">
+                        <i class="fas fa-star text-yellow-400"></i> Reviews
+                    </h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li>User Reviews</li>
+                        <li>Expert Ratings</li>
+                        <li>Community Feedback</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">
+                        <i class="fas fa-chart-bar text-green-400"></i> Analytics
+                    </h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li>Live Statistics</li>
+                        <li>Performance Metrics</li>
+                        <li>Trend Analysis</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold mb-4">
+                        <i class="fas fa-shield-alt text-purple-400"></i> Security
+                    </h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li>SSL Encryption</li>
+                        <li>Data Protection</li>
+                        <li>Verified Casinos</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 pt-8 text-center">
+                <p class="text-gray-400">
+                    &copy; 2025 Best Casino Portal Pro. Advanced casino discovery platform.
+                </p>
+                <p class="text-sm text-gray-500 mt-2">
+                    <i class="fas fa-exclamation-triangle text-yellow-400"></i>
+                    Gamble responsibly. 18+ only.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Advanced Casino Search Functionality
+        function casinoSearch() {
+            return {
+                searchQuery: '',
+                filters: {
+                    rating: '',
+                    bonus: '',
+                    games: '',
+                    payment: ''
+                },
+                allCasinos: [
+                    {
+                        id: 1, name: 'Royal Vegas Casino', rating: 5, icon: '👑',
+                        bonus: '100% up to €1,200', games: 800, payment: 'Crypto, Cards',
+                        category: 'premium', features: ['slots', 'live', 'crypto']
+                    },
+                    {
+                        id: 2, name: 'Spin Palace Casino', rating: 5, icon: '🏰',
+                        bonus: '100% up to €1,000 + 100 FS', games: 650, payment: 'PayPal, Cards',
+                        category: 'popular', features: ['slots', 'table', 'paypal']
+                    },
+                    {
+                        id: 3, name: 'Lucky Spins Casino', rating: 4, icon: '🍀',
+                        bonus: 'No Deposit: 50 Free Spins', games: 500, payment: 'Crypto, E-wallets',
+                        category: 'bonus', features: ['slots', 'crypto', 'no-deposit']
+                    },
+                    {
+                        id: 4, name: 'Diamond Elite Casino', rating: 5, icon: '💎',
+                        bonus: '200% up to €2,000', games: 1200, payment: 'All Methods',
+                        category: 'vip', features: ['live', 'table', 'vip']
+                    },
+                    {
+                        id: 5, name: 'Mega Slots Casino', rating: 4, icon: '🎰',
+                        bonus: '150% + 200 Free Spins', games: 900, payment: 'Cards, Crypto',
+                        category: 'slots', features: ['slots', 'free-spins', 'crypto']
+                    },
+                    {
+                        id: 6, name: 'Live Dealer Pro', rating: 5, icon: '🎯',
+                        bonus: '100% up to €800', games: 300, payment: 'Cards, PayPal',
+                        category: 'live', features: ['live', 'table', 'paypal']
+                    }
+                ],
+                filteredCasinos: [],
+                
+                init() {
+                    this.filteredCasinos = this.allCasinos;
+                },
+                
+                performSearch() {
+                    let results = this.allCasinos;
+                    
+                    // Text search
+                    if (this.searchQuery) {
+                        const query = this.searchQuery.toLowerCase();
+                        results = results.filter(casino => 
+                            casino.name.toLowerCase().includes(query) ||
+                            casino.bonus.toLowerCase().includes(query) ||
+                            casino.features.some(feature => feature.includes(query))
+                        );
+                    }
+                    
+                    // Rating filter
+                    if (this.filters.rating) {
+                        const minRating = parseInt(this.filters.rating);
+                        results = results.filter(casino => casino.rating >= minRating);
+                    }
+                    
+                    // Bonus filter
+                    if (this.filters.bonus) {
+                        results = results.filter(casino => {
+                            if (this.filters.bonus === 'welcome') return casino.bonus.includes('%');
+                            if (this.filters.bonus === 'no-deposit') return casino.bonus.includes('No Deposit');
+                            if (this.filters.bonus === 'free-spins') return casino.bonus.includes('Free Spins');
+                            return true;
+                        });
+                    }
+                    
+                    // Games filter
+                    if (this.filters.games) {
+                        results = results.filter(casino => 
+                            casino.features.includes(this.filters.games)
+                        );
+                    }
+                    
+                    // Payment filter
+                    if (this.filters.payment) {
+                        results = results.filter(casino => 
+                            casino.features.includes(this.filters.payment) ||
+                            casino.payment.toLowerCase().includes(this.filters.payment)
+                        );
+                    }
+                    
+                    this.filteredCasinos = results;
+                }
+            }
+        }
+        
+        // Live Data Integration
+        function liveData() {
+            return {
+                apiStatus: {
+                    healthy: true,
+                    uptime: '99.9%',
+                    version: 'v2.1'
+                },
+                liveStats: {
+                    totalCasinos: 156
+                },
+                
+                init() {
+                    this.fetchLiveData();
+                    setInterval(() => this.fetchLiveData(), 30000); // Update every 30 seconds
+                },
+                
+                async fetchLiveData() {
+                    try {
+                        // Simulate API call
+                        const response = await fetch('/api/health');
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.apiStatus.healthy = data.status === 'healthy';
+                            this.apiStatus.version = data.version;
+                        }
+                    } catch (error) {
+                        console.log('API offline, using demo data');
+                        this.apiStatus.healthy = false;
+                    }
+                }
+            }
+        }
+        
+        // Review System
+        function reviewSystem() {
+            return {
+                newReview: {
+                    casino: '',
+                    rating: '',
+                    comment: ''
+                },
+                reviews: [
+                    {
+                        id: 1, casino: 'Royal Vegas Casino', rating: 5,
+                        comment: 'Excellent casino with fast payouts and great customer service!',
+                        date: '2 days ago'
+                    },
+                    {
+                        id: 2, casino: 'Spin Palace Casino', rating: 4,
+                        comment: 'Good selection of games, bonus terms could be better.',
+                        date: '1 week ago'
+                    },
+                    {
+                        id: 3, casino: 'Lucky Spins Casino', rating: 5,
+                        comment: 'No deposit bonus worked perfectly, great for trying new games!',
+                        date: '2 weeks ago'
+                    }
+                ],
+                
+                submitReview() {
+                    const review = {
+                        id: Date.now(),
+                        casino: this.newReview.casino,
+                        rating: parseInt(this.newReview.rating),
+                        comment: this.newReview.comment,
+                        date: 'Just now'
+                    };
+                    
+                    this.reviews.unshift(review);
+                    
+                    // Reset form
+                    this.newReview = { casino: '', rating: '', comment: '' };
+                    
+                    // Show success message
+                    alert('Review submitted successfully!');
+                }
+            }
+        }
+    </script>
+</body>
+</html>
