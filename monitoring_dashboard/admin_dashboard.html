@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Best Casino Portal - Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .dashboard-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <div class="container mx-auto px-6 py-8">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold">🎰 Casino Portal Dashboard</h1>
+                <p class="text-gray-400">Real-time analytics and system monitoring</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="text-right">
+                    <div class="text-sm text-gray-400">Last Updated</div>
+                    <div id="lastUpdated" class="text-green-400 font-mono">--:--:--</div>
+                </div>
+                <div class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="dashboard-card rounded-lg p-6 text-center">
+                <div class="text-2xl mb-2">🌐</div>
+                <div class="text-sm text-gray-200">Website Status</div>
+                <div id="websiteStatus" class="text-2xl font-bold">✅ LIVE</div>
+            </div>
+            <div class="dashboard-card rounded-lg p-6 text-center">
+                <div class="text-2xl mb-2">⚡</div>
+                <div class="text-sm text-gray-200">API Health</div>
+                <div id="apiHealth" class="text-2xl font-bold">✅ HEALTHY</div>
+            </div>
+            <div class="dashboard-card rounded-lg p-6 text-center">
+                <div class="text-2xl mb-2">📊</div>
+                <div class="text-sm text-gray-200">Analytics</div>
+                <div id="analyticsStatus" class="text-2xl font-bold">✅ ACTIVE</div>
+            </div>
+            <div class="dashboard-card rounded-lg p-6 text-center">
+                <div class="text-2xl mb-2">🔐</div>
+                <div class="text-sm text-gray-200">SSL Status</div>
+                <div id="sslStatus" class="text-2xl font-bold">🔄 PENDING</div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm text-gray-200">Total Casinos</div>
+                        <div id="totalCasinos" class="text-3xl font-bold">156</div>
+                        <div class="text-sm text-green-300">+3 this week</div>
+                    </div>
+                    <div class="text-3xl">🎰</div>
+                </div>
+            </div>
+            <div class="metric-card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm text-gray-200">Active Users</div>
+                        <div id="activeUsers" class="text-3xl font-bold">1,909</div>
+                        <div class="text-sm text-green-300">+121 today</div>
+                    </div>
+                    <div class="text-3xl">👥</div>
+                </div>
+            </div>
+            <div class="metric-card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm text-gray-200">Total Reviews</div>
+                        <div id="totalReviews" class="text-3xl font-bold">3,429</div>
+                        <div class="text-sm text-green-300">+24 today</div>
+                    </div>
+                    <div class="text-3xl">⭐</div>
+                </div>
+            </div>
+            <div class="metric-card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm text-gray-200">API Requests</div>
+                        <div id="apiRequests" class="text-3xl font-bold">104.6K</div>
+                        <div class="text-sm text-green-300">+12.5% vs yesterday</div>
+                    </div>
+                    <div class="text-3xl">📈</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Traffic Chart -->
+            <div class="chart-container rounded-lg p-6">
+                <h3 class="text-xl font-bold mb-4">📊 Daily Traffic</h3>
+                <canvas id="trafficChart" width="400" height="200"></canvas>
+            </div>
+            
+            <!-- Revenue Chart -->
+            <div class="chart-container rounded-lg p-6">
+                <h3 class="text-xl font-bold mb-4">💰 Revenue Trends</h3>
+                <canvas id="revenueChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Server Performance -->
+        <div class="chart-container rounded-lg p-6 mb-8">
+            <h3 class="text-xl font-bold mb-4">🖥️ Server Performance</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <div class="text-sm text-gray-400">CPU Usage</div>
+                    <div class="w-full bg-gray-700 rounded-full h-4 mb-2">
+                        <div class="bg-green-500 h-4 rounded-full" style="width: 23%"></div>
+                    </div>
+                    <div class="text-sm">23% - Optimal</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-400">Memory Usage</div>
+                    <div class="w-full bg-gray-700 rounded-full h-4 mb-2">
+                        <div class="bg-yellow-500 h-4 rounded-full" style="width: 67%"></div>
+                    </div>
+                    <div class="text-sm">67% - Good</div>
+                </div>
+                <div>
+                    <div class="text-sm text-gray-400">Disk Usage</div>
+                    <div class="w-full bg-gray-700 rounded-full h-4 mb-2">
+                        <div class="bg-green-500 h-4 rounded-full" style="width: 34%"></div>
+                    </div>
+                    <div class="text-sm">34% - Excellent</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="chart-container rounded-lg p-6">
+            <h3 class="text-xl font-bold mb-4">📋 Recent Activity</h3>
+            <div id="activityFeed" class="space-y-3">
+                <div class="flex items-center space-x-3 text-sm">
+                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <div class="text-gray-400">2 min ago</div>
+                    <div>New casino review submitted for "Royal Vegas"</div>
+                </div>
+                <div class="flex items-center space-x-3 text-sm">
+                    <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                    <div class="text-gray-400">5 min ago</div>
+                    <div>API health check completed successfully</div>
+                </div>
+                <div class="flex items-center space-x-3 text-sm">
+                    <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                    <div class="text-gray-400">8 min ago</div>
+                    <div>System backup completed</div>
+                </div>
+                <div class="flex items-center space-x-3 text-sm">
+                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                    <div class="text-gray-400">12 min ago</div>
+                    <div>New user registration from United Kingdom</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update timestamp
+        function updateTimestamp() {
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+        }
+        updateTimestamp();
+        setInterval(updateTimestamp, 1000);
+
+        // Fetch and update dashboard data
+        async function updateDashboard() {
+            try {
+                const response = await fetch('/api/dashboard/overview');
+                const data = await response.json();
+                
+                if (data.metrics) {
+                    document.getElementById('totalCasinos').textContent = data.metrics.totalCasinos;
+                    document.getElementById('activeUsers').textContent = data.metrics.activeUsers.toLocaleString();
+                    document.getElementById('totalReviews').textContent = data.metrics.totalReviews.toLocaleString();
+                    document.getElementById('apiRequests').textContent = (data.metrics.apiRequests / 1000).toFixed(1) + 'K';
+                }
+            } catch (error) {
+                console.log('Dashboard update error:', error);
+            }
+        }
+
+        // Traffic Chart
+        const trafficCtx = document.getElementById('trafficChart').getContext('2d');
+        new Chart(trafficCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Visitors',
+                    data: [1200, 1900, 3000, 5000, 2300, 3400, 4100],
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#fff' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#9CA3AF' } },
+                    y: { ticks: { color: '#9CA3AF' } }
+                }
+            }
+        });
+
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: [12000, 15000, 18000, 22000],
+                    backgroundColor: ['#8B5CF6', '#A855F7', '#C084FC', '#DDD6FE']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { labels: { color: '#fff' } }
+                },
+                scales: {
+                    x: { ticks: { color: '#9CA3AF' } },
+                    y: { ticks: { color: '#9CA3AF' } }
+                }
+            }
+        });
+
+        // Update dashboard every 30 seconds
+        updateDashboard();
+        setInterval(updateDashboard, 30000);
+    </script>
+</body>
+</html>
