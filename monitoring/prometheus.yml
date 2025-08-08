@@ -1,0 +1,60 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter (System metrics)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # cAdvisor (Container metrics)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # Nginx metrics
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+
+  # Main API Server
+  - job_name: 'casino-api'
+    static_configs:
+      - targets: ['193.233.161.161:4000']
+    metrics_path: '/health'
+    scrape_interval: 30s
+
+  # Analytics API Server
+  - job_name: 'analytics-api'
+    static_configs:
+      - targets: ['193.233.161.161:3001']
+    metrics_path: '/api/system/health'
+    scrape_interval: 30s
+
+  # Website monitoring
+  - job_name: 'website'
+    static_configs:
+      - targets: ['193.233.161.161:80']
+    metrics_path: '/'
+    scrape_interval: 60s
+
+  # SSL Certificate monitoring
+  - job_name: 'ssl-cert'
+    static_configs:
+      - targets: ['bestcasinoportal.com:443']
+    scrape_interval: 3600s  # Check every hour
